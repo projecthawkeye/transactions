@@ -1,0 +1,102 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+
+df = pd.read_csv("trans.csv",delimiter=';')
+def ddmmyy(date):
+    
+    date1 = date//100       #YYMM form
+    date2 = date1%100        #MM form
+    
+    if date2 == 1:
+     o_date = date1-89
+    if date2 != 1:
+     o_date = date1-1
+    return o_date 
+        
+
+def old(accountnum,date,p): #here date is YYMM
+    #p is the no. of days passed in current month. 1 for 10 days, 2 for 20 days...
+    account_id=df[df['account_id']==accountnum]
+    date=account_id[((account_id['date'])//100)==date]
+    amount=date['amount']
+    amount_total=date['amount'].sum(axis=0)
+
+
+    date_010 = date[(date['date'])%100<=10]
+    amount_sum_1 = date_010['amount'].values.sum()/amount_total*100
+    amount_variation_1 = date_010['amount'].values.std()*(date_010['amount'].count())**0.5/amount_total*100
+
+
+    date_020 = date[(date['date'])%100<=20]
+    amount_sum_2 = date_020['amount'].values.sum()/amount_total*100
+    amount_variation_2 = date_020['amount'].values.std()*(date_020['amount'].count())**0.5/amount_total*100
+
+
+    date_030 = date[(date['date'])%100<=31]
+    amount_sum_3 = date_030['amount'].values.sum()/amount_total*100
+    amount_variation_3 = date_030['amount'].values.std()*(date_030['amount'].count())**0.5/amount_total*100
+
+
+    #prev_month = [amount_mean_1,amount_std_1,amount_mean_2,amount_std_2,amount_mean_3,amount_std_3]
+    limits_1 = [amount_sum_1-amount_variation_1,amount_sum_1,amount_sum_1+amount_variation_1,amount_sum_1+2*amount_variation_1]
+    limits_2 = [amount_sum_2-amount_variation_2,amount_sum_2,amount_sum_2+amount_variation_2,amount_sum_2+2*amount_variation_2]
+    limits_3 = [amount_sum_3-amount_variation_3,amount_sum_3,amount_sum_3+amount_variation_3,amount_sum_3+2*amount_variation_3]
+    
+    if p == 1:
+        limits=limits_1.copy()
+        
+        return limits
+    if p == 2:
+        limits=limits_2.copy()   
+        return limits
+    if p == 3:
+        limits=limits_3.copy()
+        return limits
+
+def new(accountnum,date1,part,amount_total=date['amount'].sum()):#date is YYMMDD
+    account_id=df[df['account_id']==accountnum]
+    date=account_id[((account_id['date'])//100)==date1//100] #same month
+    amount=date['amount']
+    #amount_total=date['amount'].sum()
+    print(amount_total)
+   # print(date)
+    if part == 1:
+         date_010 = date[(date['date'])%100<=10]
+         amount_sum_0 = date_010['amount'].values.sum()/amount_total*100
+         amount_variation_0 = date_010['amount'].values.std()*(date_010['amount'].count())**0.5/amount_total*100
+
+    if part == 2:      
+            date_020 = date[(date['date'])%100<=20]
+            amount_sum_0 = date_020['amount'].values.sum()/amount_total*100
+            amount_variation_0 = date_020['amount'].values.std()*(date_020['amount'].count())**0.5/amount_total*100
+
+    if part==3 :
+            date_030 = date[(date['date'])%100<=31]
+            amount_sum_0 = date_030['amount'].values.sum()/amount_total*100
+            amount_variation_0 = date_030['amount'].values.std()*(date_030['amount'].count())**0.5/amount_total*100
+            
+            
+    limits = old(accountnum,ddmmyy(date1),part)
+    
+    diff1=amount_sum_0 - limits[2]
+    diff2=amount_sum_0 - limits[3] 
+   # print(diff1,diff2)
+    if diff1>0 and diff2<0:
+        print("for the next 10 days your spendings should be less than ")
+        print(limits[1])
+        print("%")
+    if  diff2>0 :
+        print("for the next 10 days your spendings should be less than ")
+        print(limits[0])
+        print("%")
+    else :
+        print("Good job for these 10 days.")
+        
+
+
+
+
+
+        
+
